@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import iota
-from ctypes import c_long
 
 
 class PearlDiver:
@@ -23,23 +22,13 @@ class PearlDiver:
                 'Invalid min weight magnitude: %d' % min_weight_magnitude)
 
         offset = 0
-        mid_curl_state_low = [0] * self.CURL_STATE_LENGTH
-        mid_curl_state_high = [0] * self.CURL_STATE_LENGTH
-        for i in range(self.CURL_HASH_LENGTH, self.CURL_STATE_LENGTH):
-            mid_curl_state_low[i] = self.HIGH_BITS
-            mid_curl_state_high[i] = self.HIGH_BITS
+        mid_curl_state_low = [0] * self.CURL_HASH_LENGTH + [self.HIGH_BITS] * self.CURL_HASH_LENGTH * 2
+        mid_curl_state_high = [0] * self.CURL_HASH_LENGTH + [self.HIGH_BITS] * self.CURL_HASH_LENGTH * 2
         times = (self.TRANSACTION_LENGTH - self.CURL_HASH_LENGTH) // self.CURL_HASH_LENGTH
         for i in range(times):
             for j in range(self.CURL_HASH_LENGTH):
-                if tx_trits[offset] == 0:
-                    mid_curl_state_low[j] = self.HIGH_BITS
-                    mid_curl_state_high[j] = self.HIGH_BITS
-                elif tx_trits[offset] == 1:
-                    mid_curl_state_low[j] = self.LOW_BITS
-                    mid_curl_state_high[j] = self.HIGH_BITS
-                else:
-                    mid_curl_state_low[j] = self.HIGH_BITS
-                    mid_curl_state_high[j] = self.LOW_BITS
+                mid_curl_state_low[j] = self.HIGH_BITS if tx_trits[offset] != 1 else self.LOW_BITS
+                mid_curl_state_high[j] = self.HIGH_BITS if tx_trits[offset] != -1 else self.LOW_BITS
                 offset += 1
             self.transform(mid_curl_state_low, mid_curl_state_high)
 
@@ -48,14 +37,14 @@ class PearlDiver:
             mid_curl_state_high[i] = self.HIGH_BITS if tx_trits[offset] != -1 else self.LOW_BITS
             offset += 1
 
-        mid_curl_state_low[162 + 0] = c_long(0xdb6db6db6db6db6d).value
-        mid_curl_state_high[162 + 0] = c_long(0xb6db6db6db6db6db).value
-        mid_curl_state_low[162 + 1] = c_long(0xf1f8fc7e3f1f8fc7).value
-        mid_curl_state_high[162 + 1] = c_long(0x8fc7e3f1f8fc7e3f).value
-        mid_curl_state_low[162 + 2] = c_long(0x7fffe00ffffc01ff).value
-        mid_curl_state_high[162 + 2] = c_long(0xffc01ffff803ffff).value
-        mid_curl_state_low[162 + 3] = c_long(0xffc0000007ffffff).value
-        mid_curl_state_high[162 + 3] = c_long(0x3fffffffffffff).value
+        mid_curl_state_low[162 + 0] = 0xdb6db6db6db6db6d
+        mid_curl_state_low[162 + 1] = 0xf1f8fc7e3f1f8fc7
+        mid_curl_state_low[162 + 2] = 0x7fffe00ffffc01ff
+        mid_curl_state_low[162 + 3] = 0xffc0000007ffffff
+        mid_curl_state_high[162 + 0] = 0xb6db6db6db6db6db
+        mid_curl_state_high[162 + 1] = 0x8fc7e3f1f8fc7e3f
+        mid_curl_state_high[162 + 2] = 0xffc01ffff803ffff
+        mid_curl_state_high[162 + 3] = 0x3fffffffffffff
 
         mcscl = mid_curl_state_low[:]
         mcsch = mid_curl_state_high[:]
