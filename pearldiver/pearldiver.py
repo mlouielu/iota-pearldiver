@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import multiprocessing
 import iota
 
 
@@ -46,8 +47,26 @@ class PearlDiver:
         mid_curl_state_high[162 + 2] = 0xffc01ffff803ffff
         mid_curl_state_high[162 + 3] = 0x3fffffffffffff
 
+        pool = multiprocessing.Pool(5)
+        def callback(t):
+            return
+            pool.terminate()
+        for i in range(5):
+            pool.apply_async(func=self._search, args=(tx_trits, mid_curl_state_low, mid_curl_state_high, min_weight_magnitude, i + 1), callback=callback)
+        pool.close()
+        pool.join()
+
+        self._search(tx_trits, mid_curl_state_low, mid_curl_state_high, min_weight_magnitude, 1)
+            
+    def _search(self, tx_trits, mid_curl_state_low, mid_curl_state_high,
+                min_weight_magnitude, index):
+        tx_trits = tx_trits[:]
         mcscl = mid_curl_state_low[:]
         mcsch = mid_curl_state_high[:]
+
+        for _ in range(index):
+            self.increment(mcscl, mcsch, 162 + self.CURL_HASH_LENGTH // 9,
+                           162 + (self.CURL_HASH_LENGTH // 9) * 2)
 
         curl_state_low = [0] * self.CURL_STATE_LENGTH
         curl_state_high = [0] * self.CURL_STATE_LENGTH
@@ -71,13 +90,19 @@ class PearlDiver:
 
             if mask == 0:
                 continue
-
+            print(mask)
             while out_mask & mask == 0:
                 out_mask <<= 1
+            
             for i in range(self.CURL_HASH_LENGTH):
                 v = 1 if mcscl[i] & out_mask == 0 else -1 if mcsch[i] & out_mask == 0 else 0
                 tx_trits[self.TRANSACTION_LENGTH - self.CURL_HASH_LENGTH + i] = v
-            break
+            curl = iota.crypto.pycurl.Curl()
+            trits = [0] * 243
+            curl.absorb(tx_trits)
+            curl.squeeze(trits)
+            print("DONE", iota.Hash.from_trits(trits))
+            return
 
     def transform(self, curl_state_low, curl_state_high):
         curl_scratchpad_index = 0
