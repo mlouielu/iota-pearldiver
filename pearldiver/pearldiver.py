@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import iota
-import numpy as np
 from ctypes import c_long
-
-
-L64 = 0xFFFFFFFFFFFFFFFF
 
 
 class PearlDiver:
@@ -27,8 +23,8 @@ class PearlDiver:
                 'Invalid min weight magnitude: %d' % min_weight_magnitude)
 
         offset = 0
-        mid_curl_state_low = np.array([0] * self.CURL_STATE_LENGTH, dtype=np.int64)
-        mid_curl_state_high = np.array([0] * self.CURL_STATE_LENGTH, dtype=np.int64)
+        mid_curl_state_low = [0] * self.CURL_STATE_LENGTH
+        mid_curl_state_high = [0] * self.CURL_STATE_LENGTH
         for i in range(self.CURL_HASH_LENGTH, self.CURL_STATE_LENGTH):
             mid_curl_state_low[i] = self.HIGH_BITS
             mid_curl_state_high[i] = self.HIGH_BITS
@@ -61,20 +57,20 @@ class PearlDiver:
         mid_curl_state_low[162 + 3] = c_long(0xffc0000007ffffff).value
         mid_curl_state_high[162 + 3] = c_long(0x3fffffffffffff).value
 
-        mcscl = np.copy(mid_curl_state_low)
-        mcsch = np.copy(mid_curl_state_high)
+        mcscl = mid_curl_state_low[:]
+        mcsch = mid_curl_state_high[:]
 
-        curl_state_low = np.array([0] * self.CURL_STATE_LENGTH, dtype=np.int64)
-        curl_state_high = np.array([0] * self.CURL_STATE_LENGTH, dtype=np.int64)
+        curl_state_low = [0] * self.CURL_STATE_LENGTH
+        curl_state_high = [0] * self.CURL_STATE_LENGTH
 
         mask = 0
-        out_mask = np.int64(1)
+        out_mask = 1
         while True:
             self.increment(mcscl, mcsch,
                            162 + (self.CURL_HASH_LENGTH // 9) * 2,
                            self.CURL_HASH_LENGTH)
-            curl_state_low = np.copy(mcscl)
-            curl_state_high = np.copy(mcsch)
+            curl_state_low = mcscl[:]
+            curl_state_high = mcsch[:]
             self.transform(curl_state_low, curl_state_high)
 
             mask = self.HIGH_BITS
@@ -97,8 +93,8 @@ class PearlDiver:
     def transform(self, curl_state_low, curl_state_high):
         curl_scratchpad_index = 0
         for _ in range(iota.crypto.pycurl.NUMBER_OF_ROUNDS):
-            curl_scratchpad_low = np.copy(curl_state_low)
-            curl_scratchpad_high = np.copy(curl_state_high)
+            curl_scratchpad_low = curl_state_low[:]
+            curl_scratchpad_high = curl_state_high[:]
 
             for curl_state_index in range(self.CURL_STATE_LENGTH):
                 alpha = curl_scratchpad_low[curl_scratchpad_index]
