@@ -50,7 +50,7 @@ class PearlDiver:
         if cores < 0:
             cores = multiprocessing.cpu_count()
 
-        if cores:
+        if cores > 1:
             pool = multiprocessing.Pool(cores)
 
             def callback(val):
