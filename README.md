@@ -11,6 +11,9 @@ How to use
 
 Clone this repository and use `pipenv install`, `pipenv shell`.
 
+Or
+
+`python -m pip install pearldiver`
 
 TODO
 ====
