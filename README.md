@@ -18,4 +18,4 @@ Or
 TODO
 ====
 
-Why the hell pypy is slower than CPython? And why the hell you depend on numpy?
+Why the hell pypy is slower than CPython?
